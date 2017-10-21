@@ -2,6 +2,8 @@ const express = require('express')
 const app = express()
 const request = require('request')
 const bodyParser = require('body-parser')
+const session = require('express-session')
+const cookieParser = require('cookie-parser')
 const Conf = require('./conf.js')
 
 app.use(bodyParser.json())
@@ -10,6 +12,12 @@ app.use(express.static(__dirname + '/dist/'))
 const apiUrl = 'https://api.bmob.cn/1/classes/'
 const apiUser = 'https://api.bmob.cn/1/'
 const headerText = Conf.bmob
+app.use(session({
+  secret: 'guessmovie',
+  cookie: {maxAge: 360000000},
+  resave: false,
+  saveUninitialized: true
+}))
 
 let dinnerStatus = true // 是否允许继续点餐
 
@@ -44,12 +52,35 @@ function getFormatDate () {
   return d.toISOString().slice(0, 10)
 }
 
+// 判断用户的登录状态
+function loginStatus (req) {
+  if (req.session) {
+    return req.session.token === 'j39d04mc9ab37fhw'
+  } else {
+    return false
+  }
+}
+
 //设置请求格式
 app.all('*', function(req, res, next) {
   res.header('content-type', 'application/json;charset=utf-8')
   res.header("Access-Control-Allow-Origin", "*")
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
   next()
+})
+
+// 登录
+app.post('/signin', function (req, res) {
+  const password = req.body.password
+  if (password === '3.1415926') {
+    req.session.name = 'root'
+    req.session.obid = '123456'
+    req.session.token = 'j39d04mc9ab37fhw'
+    console.log(req.session)
+    callback(res, '登录成功！', 1, req.session)
+  } else {
+    showError(res, '密码错误！')
+  }
 })
 
 // 点餐
@@ -121,7 +152,12 @@ app.get('/getDinner/:userName', function (req, res) {
 
 // 查询所有点餐
 app.get('/getAllDinner', function (req, res) {
-  let date = getFormatDate()
+  let date
+  if (req.query.date) {
+    date = req.query.date
+  } else {
+    date = getFormatDate()
+  }
   const options = {
     method: 'GET',
     url: apiUrl + `List?where=%7B%22createdAt%22:%7B%22$gte%22:%7B%22__type%22:%22Date%22,%22iso%22:%22${date}%2000:00:00%22%7D%7D%7D`,
@@ -131,6 +167,7 @@ app.get('/getAllDinner', function (req, res) {
   request(options, function (error, response, data) {
     if (showError(res, error, data)) return
     data.dinnerStatus = dinnerStatus
+    data.loginStatus = loginStatus(req)
     callback(res, '操作成功！', 1, data)
   })
 })
