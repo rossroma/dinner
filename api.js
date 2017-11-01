@@ -160,7 +160,7 @@ app.get('/getAllDinner', function (req, res) {
   }
   const options = {
     method: 'GET',
-    url: apiUrl + `List?where=%7B%22createdAt%22:%7B%22$gte%22:%7B%22__type%22:%22Date%22,%22iso%22:%22${date}%2000:00:00%22%7D%7D%7D`,
+    url: apiUrl + `List?where=%7B%22$and%22:%5B%7B%22createdAt%22:%7B%22$gte%22:%7B%22__type%22:%20%22Date%22,%20%22iso%22:%20%22${date}%2000:00:00%22%7D%7D%7D,%20%7B%22createdAt%22:%7B%22$lte%22:%7B%22__type%22:%20%22Date%22,%20%22iso%22:%20%22${date}%2023:59:59%22%7D%7D%7D%5D%7D`,
     headers: headerText,
     json: true
   }
