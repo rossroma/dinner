@@ -97,7 +97,7 @@ app.post('/addDinner', function (req, res) {
 	if (body.userName && body.type && body.count) {
 
     // 写个彩蛋
-    if (body.others && body.others.indexOf('饺子') > -1) {
+    if (body.others && body.others.indexOf('饺子') > -1 && body.type !== 1) {
       body.type = 12
     }
 		const options = {
