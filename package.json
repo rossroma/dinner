@@ -1,6 +1,6 @@
 {
   "name": "dinner",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "逍邦网络点餐系统",
   "main": "api.js",
   "scripts": {
