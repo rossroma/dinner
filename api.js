@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const session = require('express-session')
 const cookieParser = require('cookie-parser')
 const Conf = require('./conf.js')
+const later = require('later')
 
 app.use(bodyParser.json())
 app.use(express.static(__dirname + '/dist/'))
@@ -189,5 +190,18 @@ app.get('/toggleDinner', function (req, res) {
   }
   res.end(JSON.stringify(result))
 })
+
+// 每日0点自动开启点餐
+const basic = {h: [00], m: [00]}
+const sched = {
+    schedules: [basic]
+}
+
+later.date.localTime()
+
+const t = later.setInterval(function(){
+  dinnerStatus = true
+  console.log(`${new Date()}: 点餐自动开启`)
+}, sched)
 
 module.exports = app
