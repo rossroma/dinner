@@ -172,7 +172,7 @@
           <el-input type="password" v-model="formLogin.password" auto-complete="off" placeholder="请输入管理密码"></el-input>
         </el-form-item>
       </el-form>
-      <div slot-scope="footer" class="dialog-footer">
+      <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="login">登 录</el-button>
       </div>
     </el-dialog>
