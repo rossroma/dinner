@@ -97,10 +97,6 @@ app.post('/addDinner', function (req, res) {
 	// 验证必填信息
 	if (body.userName && body.type && body.count) {
 
-    // 写个彩蛋
-    if (body.others && body.others.indexOf('饺子') > -1 && body.type === 2) {
-      body.type = 12
-    }
 		const options = {
 			method: 'POST',
 		  url: apiUrl + 'List',
@@ -164,9 +160,17 @@ app.get('/getAllDinner', function (req, res) {
   } else {
     date = getFormatDate()
   }
+
+  // 办公室筛选
+  let officeSql
+  if (req.query.office) {
+    officeSql = `,%7B%22office%22:${req.query.office}%7D`
+  } else {
+    officeSql = `,%7B%22office%22:%7B%22$exists%22:false%7D%7D`
+  }
   const options = {
     method: 'GET',
-    url: apiUrl + `List?where=%7B%22$and%22:%5B%7B%22createdAt%22:%7B%22$gte%22:%7B%22__type%22:%20%22Date%22,%20%22iso%22:%20%22${date}%2000:00:00%22%7D%7D%7D,%20%7B%22createdAt%22:%7B%22$lte%22:%7B%22__type%22:%20%22Date%22,%20%22iso%22:%20%22${date}%2023:59:59%22%7D%7D%7D%5D%7D`,
+    url: apiUrl + `List?where=%7B%22$and%22:%5B%7B%22createdAt%22:%7B%22$gte%22:%7B%22__type%22:%20%22Date%22,%20%22iso%22:%20%22${date}%2000:00:00%22%7D%7D%7D,%20%7B%22createdAt%22:%7B%22$lte%22:%7B%22__type%22:%20%22Date%22,%20%22iso%22:%20%22${date}%2023:59:59%22%7D%7D%7D${officeSql}%5D%7D`,
     headers: headerText,
     json: true
   }

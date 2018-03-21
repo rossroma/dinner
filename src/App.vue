@@ -183,6 +183,13 @@
 import Bus from './bus'
 import { Message, MessageBox } from 'element-ui'
 
+// 通过hash来区分不同的办公室
+let office
+const hash = window.location.hash
+if (hash.indexOf('910') > -1) {
+  office = 910
+}
+
 export default {
   name: 'app',
 
@@ -201,7 +208,8 @@ export default {
         userName: '',
         type: 1,
         count: 1,
-        others: ''
+        others: '',
+        office: office
       },
       // 点餐必填验证
       rulesOrder: {
@@ -264,9 +272,9 @@ export default {
       this.loading = true
       let url
       if (date) {
-        url = `getAllDinner?date=${date}`
+        url = `getAllDinner?date=${date}&office=${office}`
       } else {
-        url = 'getAllDinner'
+        url = `getAllDinner?office=${office}`
       }
       Bus.get(url, (data) => {
         this.dinnerStatus = data.result.dinnerStatus
