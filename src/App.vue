@@ -184,7 +184,7 @@ import Bus from './bus'
 import { Message, MessageBox } from 'element-ui'
 
 // 通过hash来区分不同的办公室
-let office
+let office = ''
 const hash = window.location.hash
 if (hash.indexOf('910') > -1) {
   office = 910
