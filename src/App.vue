@@ -338,7 +338,7 @@ export default {
     orderSubmit () {
       // 如果没有office就删掉改属性
       if (!office) {
-        delete this.formData.office
+        delete this.formOrder.office
       }
       this.myDinnerStatus = true // 更改我的点餐状态
       const formData = this.formOrder
