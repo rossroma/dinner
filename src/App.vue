@@ -336,6 +336,10 @@ export default {
 
     // 提交点餐信息
     orderSubmit () {
+      // 如果没有office就删掉改属性
+      if (!office) {
+        delete this.formData.office
+      }
       this.myDinnerStatus = true // 更改我的点餐状态
       const formData = this.formOrder
       Bus.post('addDinner', formData, (data) => {
