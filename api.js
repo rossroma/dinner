@@ -43,6 +43,7 @@ function showError (res, error, body) {
 		return false
 	}
 	callback(res, errorStr, 10)
+  return true
 }
 
 // 获取格式化后的日期
