@@ -4,6 +4,7 @@ const request = require('request')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 const cookieParser = require('cookie-parser')
+const Correction = require('./correction.js')
 const Conf = require('./conf.js')
 const later = require('later')
 
@@ -63,6 +64,15 @@ function loginStatus (req) {
   }
 }
 
+// 得到真实姓名
+function getRealName(body) {
+  const userName = body.userName.trim().toLowerCase()
+  let index = Correction.nickname.findIndex(item => item.indexOf(userName) > -1)
+  if (index > -1) {
+    body.userName += ` (${Correction.realname[index]})`
+  }
+}
+
 //设置请求格式
 app.all('*', function(req, res, next) {
   res.header('content-type', 'application/json;charset=utf-8')
@@ -97,6 +107,9 @@ app.post('/addDinner', function (req, res) {
 	let body = req.body
 	// 验证必填信息
 	if (body.userName && body.type && body.count) {
+
+    // 识别昵称
+    getRealName(body)
 
 		const options = {
 			method: 'POST',
