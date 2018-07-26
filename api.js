@@ -8,6 +8,8 @@ const Correction = require('./correction.js')
 const Conf = require('./conf.js')
 const later = require('later')
 
+let ip = '' // 客户端ip地址
+
 app.use(bodyParser.json())
 app.use(express.static(__dirname + '/dist/'))
 
@@ -97,14 +99,16 @@ app.post('/signin', function (req, res) {
 
 // 点餐
 app.post('/addDinner', function (req, res) {
-
   // 点餐通道是否关闭
   if (!dinnerStatus) {
     callback(res, '点餐通道已关闭！', 3)
     return
   }
 
-	let body = req.body
+  let body = req.body
+  body.ip = ip
+  body.userAgent = req.headers['user-agent']
+
 	// 验证必填信息
 	if (body.userName && body.type && body.count) {
 
@@ -115,7 +119,7 @@ app.post('/addDinner', function (req, res) {
 			method: 'POST',
 		  url: apiUrl + 'List',
 		  headers: headerText,
-		  body: req.body,
+      body: body,
 		  json: true
 		}
 		request(options, function (error, response, data) {
@@ -168,6 +172,16 @@ app.get('/getDinner/:userName', function (req, res) {
 
 // 查询所有点餐
 app.get('/getAllDinner', function (req, res) {
+  ip = req.headers['x-forwarded-for'] ||
+    req.ip ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    req.connection.socket.remoteAddress || ''
+  if (ip.split(',').length > 0) {
+    ip = ip.split(',')[0]
+  }
+  ip = ip.replace('::ffff:', '')
+
   let date
   if (req.query.date) {
     date = req.query.date
