@@ -182,6 +182,7 @@
 <script>
 import Bus from './bus'
 import { Message, MessageBox } from 'element-ui'
+window._bus === undefined && (window._bus = Bus)
 
 // 通过hash来区分不同的办公室
 let office = ''
