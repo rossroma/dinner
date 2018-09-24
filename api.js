@@ -4,7 +4,6 @@ const request = require('request')
 const bodyParser = require('body-parser')
 const session = require('express-session')
 const cookieParser = require('cookie-parser')
-const Correction = require('./correction.js')
 const Conf = require('./conf.js')
 const later = require('later')
 
@@ -66,12 +65,31 @@ function loginStatus (req) {
   }
 }
 
-// 得到真实姓名
-function getRealName(body) {
-  const userName = body.userName.trim().toLowerCase()
-  let index = Correction.nickname.findIndex(item => item.indexOf(userName) > -1)
-  if (index > -1) {
-    body.userName += ` (${Correction.realname[index]})`
+// 用户输入校验
+function validator (option, res, data) {
+  const {userName, count, type} = data
+
+  // 点餐通道是否关闭
+  if (!dinnerStatus) {
+    callback(res, '点餐通道已关闭', 3)
+    return
+  } else {
+    // 点餐校验
+    if (option === 'addDinner') {
+      if (!userName) {
+        callback(res, '点餐人缺失', 2)
+      } else if (/[^\u4e00-\u9fa5]/.test(userName)) { // 中文校验
+        callback(res, '点餐人格式不合法', 2)
+      } else if (userName.length < 2 || userName.length > 4) {
+        callback(res, '点餐人长度不合法', 2)
+      } else if ([0.5, 1, 2].indexOf(count) === -1) {
+        callback(res, '主食数量不合法', 2)
+      } else if ([1, 2, 12].indexOf(type) === -1) {
+        callback(res, '主食类型不合法', 2)
+      } else {
+        return true
+      }
+    }
   }
 }
 
@@ -99,38 +117,22 @@ app.post('/signin', function (req, res) {
 
 // 点餐
 app.post('/addDinner', function (req, res) {
-  // 点餐通道是否关闭
-  if (!dinnerStatus) {
-    callback(res, '点餐通道已关闭！', 3)
-    return
-  }
 
   let body = req.body
-  body.ip = ip
-  body.userAgent = req.headers['user-agent']
 
-	// 验证必填信息
-	if (body.userName && body.type && body.count) {
-
-    // 识别昵称
-    getRealName(body)
-
-		const options = {
-			method: 'POST',
-		  url: apiUrl + 'List',
-		  headers: headerText,
+  if (validator('addDinner', res, body)) {
+    const options = {
+      method: 'POST',
+      url: apiUrl + 'List',
+      headers: headerText,
       body: body,
-		  json: true
-		}
-		request(options, function (error, response, data) {
-		  if (showError(res, error, data)) return
-		  callback(res, '点餐成功！', 1, data)
-		})
-	} else {
-
-		// 数据填写不完整
-		callback(res, '数据填写不完整！', 2)
-	}
+      json: true
+    }
+    request(options, function (error, response, data) {
+      if (showError(res, error, data)) return
+      callback(res, '点餐成功！', 1, data)
+    })
+  }
 })
 
 // 撤销点餐
