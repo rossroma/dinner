@@ -37,8 +37,6 @@
             :data="tableData"
             style="width: 100%"
             :row-class-name="chooseMine"
-            show-summary
-            :summary-method="getSummaries"
             v-loading="loading"
             element-loading-text="拼了老命在加载">
             <el-table-column
@@ -52,7 +50,7 @@
             <el-table-column
               label="主食">
               <template scope="scope">
-                {{scope.row.type | typeFilter}}
+                {{typeName(scope.row.type)}}
               </template>
             </el-table-column>
             <el-table-column
@@ -83,12 +81,68 @@
             </el-table-column>
           </el-table>
         </el-tab-pane>
+        <el-tab-pane label="点餐统计" name="statistics">
+          <el-table
+            :data="statisticsList"
+            style="width: 100%"
+            v-loading="loading"
+            element-loading-text="拼了老命在加载">
+            <el-table-column type="expand">
+              <template slot-scope="props">
+                <el-table
+                  border
+                  stripe
+                  size="small"
+                  :data="props.row.childTable">
+                  <el-table-column
+                    type="index"
+                    width="50">
+                  </el-table-column>
+                  <el-table-column
+                    prop="userName"
+                    label="姓名"
+                    width="180">
+                  </el-table-column>
+                  <el-table-column
+                    prop="count"
+                    label="数量"
+                    width="100">
+                  </el-table-column>
+                  <el-table-column
+                    prop="createdAt"
+                    label="点餐时间"
+                    width="180">
+                  </el-table-column>
+                  <el-table-column
+                    prop="others"
+                    label="备注">
+                  </el-table-column>
+                </el-table>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="type"
+              label="主食"
+              width="180">
+              <template scope="scope">
+                {{typeName(scope.row.type)}}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="count"
+              label="份数"
+              width="100">
+            </el-table-column>
+            <el-table-column
+              prop="usersCount"
+              label="人次">
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
         <el-tab-pane label="历史记录" name="historyLog" v-if="loginStatus">
           <el-table
             :data="tableData"
             style="width: 100%"
-            show-summary
-            :summary-method="getSummaries"
             v-loading="loading"
             element-loading-text="拼了老命在加载">
             <el-table-column
@@ -104,7 +158,7 @@
               label="主食"
               width="180">
               <template scope="scope">
-                {{scope.row.type | typeFilter}}
+                {{typeName(scope.row.type)}}
               </template>
             </el-table-column>
             <el-table-column
@@ -133,9 +187,13 @@
 
           <el-form-item>
             <el-select size="small" v-model="formOrder.type" placeholder="主食">
-              <el-option :value="1" label="米饭"></el-option>
-              <el-option :value="2" label="馒头"></el-option>
-              <el-option :value="12" label="饺子"></el-option>
+              <el-option
+                v-for="(item, index) in typeOptions"
+                :key="index"
+                :disabled="item.disabled"
+                :value="item.value"
+                :label="item.name">
+              </el-option>
             </el-select>
           </el-form-item>
 
@@ -247,7 +305,51 @@ export default {
         }]
       },
       autoWidth: window.innerWidth < 500 ? '100%' : '500px',
-      smallScreen: window.innerWidth < 500
+      smallScreen: window.innerWidth < 500,
+      // 菜品选项
+      typeOptions: [
+        {
+          name: '米饭',
+          value: 1
+        },
+        {
+          name: '馒头',
+          value: 2,
+          disabled: true
+        },
+        {
+          name: '饺子',
+          value: 12
+        },
+        {
+          name: '轻食沙拉',
+          value: 3
+        },
+        {
+          name: '米线',
+          value: 4
+        },
+        {
+          name: '营养粥',
+          value: 5
+        }
+      ],
+      // 点餐统计
+      statisticsList: [
+        {
+          name: '饺子',
+          count: 23,
+          usersCount: 25,
+          childTable: [
+            {
+              userName: '张三',
+              count: 0.5,
+              createdAt: '2019-08-15 15:23',
+              others: '不要鸡蛋'
+            }
+          ]
+        }
+      ]
     }
   },
 
@@ -279,13 +381,50 @@ export default {
       Bus.get(url, (data) => {
         this.dinnerStatus = data.result.dinnerStatus
         this.tableData = data.result.results
+        this.statisticsList = data.result.statisticsList
         this.loginStatus = data.result.loginStatus
+        this.createStatistics(data.result.results)
         this.loading = false
         // 判断是否已点
         if (this.myName && this.tableData.findIndex(item => item.userName === this.myName) > -1) {
           this.myDinnerStatus = true
         }
       })
+    },
+
+    // 生成统计信息
+    createStatistics (data) {
+      let arr = []
+      data.forEach(row => {
+        const index = arr.findIndex(item => item.type === row.type)
+        // 如该类型不存在，则push该类型
+        if (index === -1) {
+          arr.push({
+            type: row.type,
+            count: row.count,
+            usersCount: 1,
+            childTable: [
+              {
+                userName: row.userName,
+                count: row.count,
+                createdAt: row.createdAt,
+                others: row.others
+              }
+            ]
+          })
+        } else {
+          let currentItem = arr[index]
+          currentItem.count += row.count
+          currentItem.usersCount ++
+          currentItem.childTable.push({
+            userName: row.userName,
+            count: row.count,
+            createdAt: row.createdAt,
+            others: row.others
+          })
+        }
+      })
+      this.statisticsList = arr
     },
 
     // 获取localStorage
@@ -372,7 +511,7 @@ export default {
     },
 
     // tab点击事件
-    handleTabClick (e) {
+    handleTabClick () {
       this.getOrderList()
     },
 
@@ -446,45 +585,14 @@ export default {
       }
     },
 
-    // 统计信息
-    getSummaries () {
-      let rice = 0
-      let bread = 0
-      let dumplings = 0
-      this.tableData.forEach(row => {
-        if (row.type === 1) {
-          rice += row.count
-        } else if (row.type === 12) {
-          dumplings += row.count
-        } else {
-          bread += row.count
-        }
-      })
-      let arr = ['统计']
-      if (rice) {
-        arr.push(`米饭：${rice}`)
-      }
-      if (bread) {
-        arr.push(`馒头：${bread}`)
-      }
-      if (dumplings) {
-        arr.push(`饺子：${dumplings}`)
-      }
-      return arr
+    // 主食名称
+    typeName (type) {
+      const option = this.typeOptions.find(item => item.value === type)
+      return option && option.name
     }
   },
 
   filters: {
-    typeFilter (type) {
-      if (type === 1) {
-        return '米饭'
-      } else if (type === 12) {
-        return '饺子'
-      } else {
-        return '馒头'
-      }
-    },
-
     timeFilter (date) {
       return date.slice(-8)
     }
