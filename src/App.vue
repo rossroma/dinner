@@ -313,25 +313,33 @@ export default {
           value: 1
         },
         {
-          name: '馒头',
-          value: 2,
-          disabled: true
-        },
-        {
           name: '饺子',
           value: 12
-        },
-        {
-          name: '轻食沙拉',
-          value: 3
         },
         {
           name: '米线',
           value: 4
         },
         {
-          name: '营养粥',
-          value: 5
+          name: '轻食-超级鸡胸肉',
+          value: 31
+        },
+        {
+          name: '轻食-招牌烤鸡肉时蔬',
+          value: 32
+        },
+        {
+          name: '轻食-经典凯撒沙拉',
+          value: 33
+        },
+        {
+          name: '轻食-印加黎麦煎鸡胸肉',
+          value: 34
+        },
+        {
+          name: '馒头',
+          value: 2,
+          disabled: true
         }
       ],
       // 点餐统计

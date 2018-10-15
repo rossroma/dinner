@@ -84,7 +84,7 @@ function validator (option, res, data) {
         callback(res, '点餐人长度不合法', 2)
       } else if ([0.5, 1, 2].indexOf(count) === -1) {
         callback(res, '主食数量不合法', 2)
-      } else if ([1, 2, 3, 4, 5, 12].indexOf(type) === -1) {
+      } else if ([1, 2, 3, 4, 5, 12, 31, 32, 33, 34].indexOf(type) === -1) {
         callback(res, '主食类型不合法', 2)
       } else {
         return true
