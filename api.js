@@ -7,8 +7,6 @@ const cookieParser = require('cookie-parser')
 const Conf = require('./conf.js')
 const later = require('later')
 
-let ip = '' // 客户端ip地址
-
 app.use(bodyParser.json())
 app.use(express.static(__dirname + '/dist/'))
 
@@ -23,6 +21,7 @@ app.use(session({
 }))
 
 let dinnerStatus = true // 是否允许继续点餐
+let whiteList = [] // 点餐白名单
 
 // 处理返回信息
 function callback(res, msg = '操作成功！', code = 1, data) {
@@ -67,28 +66,20 @@ function loginStatus (req) {
 
 // 用户输入校验
 function validator (option, res, data) {
-  const {userName, count, type} = data
-
-  // 点餐通道是否关闭
-  if (!dinnerStatus) {
-    callback(res, '点餐通道已关闭', 3)
-    return
-  } else {
-    // 点餐校验
-    if (option === 'addDinner') {
-      if (!userName) {
-        callback(res, '点餐人缺失', 2)
-      } else if (/[^\u4e00-\u9fa5]/.test(userName)) { // 中文校验
-        callback(res, '点餐人格式不合法', 2)
-      } else if (userName.length < 2 || userName.length > 4) {
-        callback(res, '点餐人长度不合法', 2)
-      } else if ([0.5, 1, 2].indexOf(count) === -1) {
-        callback(res, '主食数量不合法', 2)
-      } else if ([1, 2, 3, 4, 5, 12, 31, 32, 33, 34].indexOf(type) === -1) {
-        callback(res, '主食类型不合法', 2)
-      } else {
-        return true
-      }
+  
+  // 点餐校验
+  if (option === 'addDinner') {
+    const { userName, menuType} = data
+    if (!dinnerStatus) {
+      callback(res, '点餐通道已关闭', 3)
+    } else if (!userName) {
+      callback(res, '点餐人缺失', 2)
+    } else if (whiteList.indexOf(userName) === -1) { // 白名单验证
+      callback(res, '点餐人不在白名单内，请联系行政处理', 2)
+    } else if (!menuType || menuType.length !== 2) {
+      callback(res, '主食类型选择有误', 2)
+    } else {
+      return true
     }
   }
 }
@@ -174,15 +165,6 @@ app.get('/getDinner/:userName', function (req, res) {
 
 // 查询所有点餐
 app.get('/getAllDinner', function (req, res) {
-  ip = req.headers['x-forwarded-for'] ||
-    req.ip ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress ||
-    req.connection.socket.remoteAddress || ''
-  if (ip.split(',').length > 0) {
-    ip = ip.split(',')[0]
-  }
-  ip = ip.replace('::ffff:', '')
 
   let date
   if (req.query.date) {
@@ -223,6 +205,71 @@ app.get('/toggleDinner', function (req, res) {
     }
   }
   res.end(JSON.stringify(result))
+})
+
+// 设置白名单
+app.post('/setWhiteList', function (req, res) {
+
+  let body = req.body
+
+  const options = {
+    method: 'PUT',
+    url: apiUrl + 'whiteList/WztQBBBC',
+    headers: headerText,
+    body: body,
+    json: true
+  }
+  request(options, function (error, response, data) {
+    if (showError(res, error, data)) return
+    callback(res, '保存成功！', 1, data)
+  })
+})
+
+// 查询白名单
+app.get('/getWhiteList', function (req, res) {
+  const options = {
+    method: 'GET',
+    url: apiUrl + `whiteList/WztQBBBC`,
+    headers: headerText,
+    json: true
+  }
+  request(options, function (error, response, data) {
+    if (showError(res, error, data)) return
+    whiteList = data.value
+    callback(res, '操作成功！', 1, data.value)
+  })
+})
+
+// 设置点餐菜单
+app.post('/setMenuList', function (req, res) {
+
+  let body = req.body
+
+  const options = {
+    method: 'PUT',
+    url: apiUrl + 'menuList/GEyhUUU9',
+    headers: headerText,
+    body: body,
+    json: true
+  }
+  request(options, function (error, response, data) {
+    if (showError(res, error, data)) return
+    callback(res, '保存成功！', 1, data)
+  })
+})
+
+// 查询点餐菜单
+app.get('/getMenuList', function (req, res) {
+  const options = {
+    method: 'GET',
+    url: apiUrl + `menuList/GEyhUUU9`,
+    headers: headerText,
+    json: true
+  }
+  request(options, function (error, response, data) {
+    if (showError(res, error, data)) return
+    callback(res, '操作成功！', 1, data.value)
+  })
 })
 
 // 每日0点自动开启点餐
