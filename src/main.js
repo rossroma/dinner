@@ -1,7 +1,7 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
-import { Container, Header, Button, Main, Switch, DatePicker, Tabs, TabPane, Table, TableColumn, Form, FormItem, Input, Select, Option, Dialog, Loading } from 'element-ui'
+import { Container, Header, Button, Main, Switch, DatePicker, Tabs, TabPane, Table, TableColumn, Form, FormItem, Input, Select, Option, Dialog, Loading, Collapse, CollapseItem, Cascader } from 'element-ui'
 import App from './App'
 
 Vue.config.productionTip = false
@@ -22,6 +22,9 @@ Vue.use(Select)
 Vue.use(Option)
 Vue.use(Dialog)
 Vue.use(Loading)
+Vue.use(Collapse)
+Vue.use(CollapseItem)
+Vue.use(Cascader)
 
 /* eslint-disable no-new */
 new Vue({

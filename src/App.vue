@@ -15,7 +15,7 @@
           <span class="text">点餐{{dinnerStatusText}}</span>        
         </div>
         <el-date-picker
-          v-else
+          v-if="activeName === 'historyLog'"
           v-model="pickDate"
           size="small"
           align="right"
@@ -48,18 +48,20 @@
               label="姓名">
             </el-table-column>
             <el-table-column
-              label="主食">
-              <template scope="scope">
-                {{typeName(scope.row.type)}}
+              label="主食类型">
+              <template slot-scope="scope">
+                {{scope.row.menuType && scope.row.menuType[0]}}
               </template>
             </el-table-column>
             <el-table-column
-              prop="count"
-              label="数量">
+              label="主食明细">
+              <template slot-scope="scope">
+                {{scope.row.menuType && scope.row.menuType[1]}}
+              </template>
             </el-table-column>
             <el-table-column
               label="时间">
-              <template scope="scope">
+              <template slot-scope="scope">
                 {{scope.row.createdAt | timeFilter}}
               </template>
             </el-table-column>
@@ -69,7 +71,7 @@
             </el-table-column>
             <el-table-column
               label="操作">
-              <template scope="scope">
+              <template slot-scope="scope">
                 <el-button
                   v-if="scope.row.userName === myName || loginStatus"
                   @click.native.prevent="handleDelete(scope.row.objectId)"
@@ -82,100 +84,21 @@
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="点餐统计" name="statistics">
-          <el-table
-            :data="statisticsList"
-            style="width: 100%"
-            v-loading="loading"
-            element-loading-text="拼了老命在加载">
-            <el-table-column type="expand">
-              <template slot-scope="props">
-                <el-table
-                  border
-                  stripe
-                  size="small"
-                  :data="props.row.childTable">
-                  <el-table-column
-                    type="index"
-                    width="50">
-                  </el-table-column>
-                  <el-table-column
-                    prop="userName"
-                    label="姓名"
-                    width="180">
-                  </el-table-column>
-                  <el-table-column
-                    prop="count"
-                    label="数量"
-                    width="100">
-                  </el-table-column>
-                  <el-table-column
-                    prop="createdAt"
-                    label="点餐时间"
-                    width="180">
-                  </el-table-column>
-                  <el-table-column
-                    prop="others"
-                    label="备注">
-                  </el-table-column>
-                </el-table>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="type"
-              label="主食"
-              width="180">
-              <template scope="scope">
-                {{typeName(scope.row.type)}}
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="count"
-              label="份数"
-              width="100">
-            </el-table-column>
-            <el-table-column
-              prop="usersCount"
-              label="人次">
-            </el-table-column>
-          </el-table>
+          <statistics-list
+            v-if="activeName === 'statistics'"
+            :statistics-list="statisticsList"
+            :loading="loading">
+          </statistics-list>
+        </el-tab-pane>
+        <el-tab-pane label="设置" name="setting" v-if="loginStatus">
+          <setting v-if="activeName === 'setting'" @menuList="handleMenu"></setting>
         </el-tab-pane>
         <el-tab-pane label="历史记录" name="historyLog" v-if="loginStatus">
-          <el-table
-            :data="tableData"
-            style="width: 100%"
-            v-loading="loading"
-            element-loading-text="拼了老命在加载">
-            <el-table-column
-              type="index"
-              width="50">
-            </el-table-column>
-            <el-table-column
-              prop="userName"
-              label="姓名"
-              width="180">
-            </el-table-column>
-            <el-table-column
-              label="主食"
-              width="180">
-              <template scope="scope">
-                {{typeName(scope.row.type)}}
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="count"
-              label="数量"
-              width="180">
-            </el-table-column>
-            <el-table-column
-              prop="createdAt"
-              label="时间"
-              width="220">
-            </el-table-column>
-            <el-table-column
-              prop="others"
-              label="备注">
-            </el-table-column>
-          </el-table>
+          <history-list
+            v-if="activeName === 'historyLog'"
+            :table-data="tableData"
+            :loading="loading">
+          </history-list>
         </el-tab-pane>
       </el-tabs>
 
@@ -184,25 +107,12 @@
           <el-form-item prop="userName">
             <el-input size="small" v-model="formOrder.userName" placeholder="点餐人"></el-input>
           </el-form-item>
-
-          <el-form-item>
-            <el-select size="small" v-model="formOrder.type" placeholder="主食">
-              <el-option
-                v-for="(item, index) in typeOptions"
-                :key="index"
-                :disabled="item.disabled"
-                :value="item.value"
-                :label="item.name">
-              </el-option>
-            </el-select>
-          </el-form-item>
-
-          <el-form-item>
-            <el-select size="small" v-model="formOrder.count" placeholder="主食数量">
-              <el-option :value="0.5"></el-option>
-              <el-option :value="1"></el-option>
-              <el-option :value="2"></el-option>
-            </el-select>
+          <el-form-item prop="menuType">
+            <el-cascader
+              size="small"
+              :options="formatMenuList"
+              v-model="formOrder.menuType">
+            </el-cascader>
           </el-form-item>
         </div>
         <div class="row pc">
@@ -240,6 +150,9 @@
 <script>
 import Bus from './bus'
 import { Message, MessageBox } from 'element-ui'
+import StatisticsList from './components/statistics-list'
+import HistoryList from './components/history-list'
+import Setting from './components/setting'
 
 // 通过hash来区分不同的办公室
 let office = ''
@@ -264,14 +177,13 @@ export default {
       // 点餐表单数据
       formOrder: {
         userName: '',
-        type: 1,
-        count: 1,
-        others: '',
-        office: office
+        menuType: [],
+        others: ''
       },
       // 点餐必填验证
       rulesOrder: {
-        userName: { required: true, message: '请输入点餐人姓名！', trigger: 'blur' }
+        userName: { required: true, validator: this.userNameValidator, trigger: 'blur' },
+        menuType: { required: true, type: 'array', message: '请选择主食', trigger: 'change' }
       },
       // 登录表单数据
       formLogin: {
@@ -306,42 +218,6 @@ export default {
       },
       autoWidth: window.innerWidth < 500 ? '100%' : '500px',
       smallScreen: window.innerWidth < 500,
-      // 菜品选项
-      typeOptions: [
-        {
-          name: '米饭',
-          value: 1
-        },
-        {
-          name: '饺子',
-          value: 12
-        },
-        {
-          name: '米线',
-          value: 4
-        },
-        {
-          name: '轻食-超级鸡胸肉',
-          value: 31
-        },
-        {
-          name: '轻食-招牌烤鸡肉时蔬',
-          value: 32
-        },
-        {
-          name: '轻食-经典凯撒沙拉',
-          value: 33
-        },
-        {
-          name: '轻食-印加黎麦煎鸡胸肉',
-          value: 34
-        },
-        {
-          name: '馒头',
-          value: 2,
-          disabled: true
-        }
-      ],
       // 点餐统计
       statisticsList: [
         {
@@ -357,8 +233,18 @@ export default {
             }
           ]
         }
-      ]
+      ],
+      // 菜品选项
+      menuList: [],
+      // 点餐白名单
+      whiteList: ''
     }
+  },
+
+  components: {
+    StatisticsList,
+    HistoryList,
+    Setting
   },
 
   computed: {
@@ -368,12 +254,35 @@ export default {
       } else {
         return '关闭'
       }
+    },
+
+    // 格式化后菜品选项
+    formatMenuList () {
+      return this.menuList.map(item => {
+        return {
+          value: item.name,
+          label: item.name,
+          children: item.values.match(/\S+/g).map(child => {
+            return {
+              value: child,
+              label: child
+            }
+          })
+        }
+      })
+    },
+
+    // 格式化后的白名单
+    formatWhiteList () {
+      return this.whiteList.match(/\S+/g)
     }
   },
 
-  created () {
+  mounted () {
     this.getOrderList()
     this.getLocalStorage()
+    this.getWhiteList()
+    this.getMenuList()
   },
 
   methods: {
@@ -389,7 +298,6 @@ export default {
       Bus.get(url, (data) => {
         this.dinnerStatus = data.result.dinnerStatus
         this.tableData = data.result.results
-        this.statisticsList = data.result.statisticsList
         this.loginStatus = data.result.loginStatus
         this.createStatistics(data.result.results)
         this.loading = false
@@ -403,13 +311,26 @@ export default {
     // 生成统计信息
     createStatistics (data) {
       let arr = []
-      data.forEach(row => {
+      // 兼容历史数据
+      const formatData = data.map(item => {
+        if (item.menuType && item.menuType.length) {
+          return {
+            userName: item.userName,
+            others: item.others,
+            type: item.menuType[0],
+            count: item.menuType[1],
+            createdAt: item.createdAt
+          }
+        } else {
+          return item
+        }
+      })
+      formatData.forEach(row => {
         const index = arr.findIndex(item => item.type === row.type)
         // 如该类型不存在，则push该类型
         if (index === -1) {
           arr.push({
             type: row.type,
-            count: row.count,
             usersCount: 1,
             childTable: [
               {
@@ -422,8 +343,7 @@ export default {
           })
         } else {
           let currentItem = arr[index]
-          currentItem.count += row.count
-          currentItem.usersCount ++
+          currentItem.usersCount++
           currentItem.childTable.push({
             userName: row.userName,
             count: row.count,
@@ -442,17 +362,13 @@ export default {
       const LS = window.JSON.parse(storage)
       if (LS) {
         this.formOrder.userName = this.myName = LS.userName
-        this.formOrder.type = Number(LS.type) || 1
-        this.formOrder.count = Number(LS.count) || 1
       }
     },
 
     // 设置localStorage
     setLocalStorage (data) {
       let userinfos = {
-        userName: data.userName,
-        type: data.type,
-        count: data.count
+        userName: data.userName
       }
       userinfos = window.JSON.stringify(userinfos)
       Bus.storage().set('DINNER-userinfos', userinfos)
@@ -483,12 +399,13 @@ export default {
 
     // 提交点餐信息
     orderSubmit () {
-      // 如果没有office就删掉改属性
-      if (!office) {
-        delete this.formOrder.office
-      }
       this.myDinnerStatus = true // 更改我的点餐状态
-      const formData = this.formOrder
+      const formData = {
+        userName: this.formOrder.userName,
+        office: office || undefined,
+        menuType: this.formOrder.menuType,
+        others: this.formOrder.others
+      }
       Bus.post('addDinner', formData, (data) => {
         if (data.code === 1) {
           Message({
@@ -593,10 +510,34 @@ export default {
       }
     },
 
-    // 主食名称
-    typeName (type) {
-      const option = this.typeOptions.find(item => item.value === type)
-      return option && option.name
+    // 监听菜单的数据
+    handleMenu (val) {
+      this.menuList = val
+    },
+
+    // 获取点餐白名单
+    getWhiteList () {
+      Bus.get('getWhiteList', (data) => {
+        this.whiteList = data.result
+      })
+    },
+
+    // 获取点餐菜单
+    getMenuList () {
+      Bus.get('getMenuList', (data) => {
+        this.menuList = data.result
+      })
+    },
+
+    // 校验点餐人
+    userNameValidator (rule, value, callback) {
+      if (!value) {
+        callback(new Error('点餐人姓名不能为空'))
+      } else if (this.formatWhiteList.indexOf(value) === -1) {
+        callback(new Error('点餐人不再白名单内，请联系行政处理'))
+      } else {
+        callback()
+      }
     }
   },
 
@@ -656,7 +597,9 @@ export default {
     }
     .row:not(.pc) {
       .el-form-item {
-        width: 31%;
+        .el-input {
+          width: 220px;
+        }
       }
     }
     .textarea {
