@@ -25,12 +25,12 @@
           <el-table-column
             prop="userName"
             label="姓名"
-            width="180">
+            width="120">
           </el-table-column>
           <el-table-column
             prop="count"
             label="明细"
-            width="100">
+            width="180">
           </el-table-column>
           <el-table-column
             prop="createdAt"
