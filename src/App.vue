@@ -595,13 +595,6 @@ export default {
     .mobile {
       display: none;
     }
-    .row:not(.pc) {
-      .el-form-item {
-        .el-input {
-          width: 220px;
-        }
-      }
-    }
     .textarea {
       width: 475px;
     }
@@ -660,15 +653,16 @@ export default {
       backdrop-filter: blur(2px);
       z-index: 2;
       .el-form-item {
-        width: 46%!important;
+        width: 30%;
         margin: 0 0 10px 2%;
         height: 32px;
       }
       .mobile {
+        width: 30%;
         display: block;
-        width: 45vw;
-        margin-left: 52%;
+        float: right;
         margin-top: -38px;
+        margin-right: 2%;
       }
       .login-btn-m {
         display: block;
