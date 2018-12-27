@@ -4,7 +4,7 @@
   "description": "逍邦网络点餐系统",
   "main": "api.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "eslint --ext .js,.vue src",
     "start": "node api.js",
     "dev": "node build/dev-server.js",
     "build": "node build/build.js",

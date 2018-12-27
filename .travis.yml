@@ -1,8 +1,29 @@
 language: node_js
+
 node_js: 
   - "8"
+
+cache:
+  directories:
+    - node_modules
+
 before_install:
   - "npm i"
-  - "npm run build"
+
 scripts:
-  - git pull
+  - "npm run build"
+
+after_script:
+  - git init
+  - git config user.name "${U_NAME}"
+  - git config user.email "${U_EMAIL}"
+  - git add .
+  - git commit -m "travis building"
+  - git push --force --quiet "https://${G_TOKEN}@${G_PATH}" master:${G_BRANCH}
+
+branches:
+  only:
+    - master
+
+env:
+ global:
