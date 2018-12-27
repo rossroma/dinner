@@ -11,7 +11,7 @@ before_install:
   - "npm i"
 
 scripts:
-  - "npm run build"
+  - npm run build
 
 after_script:
   - git init
