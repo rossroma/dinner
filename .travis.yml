@@ -14,7 +14,6 @@ before_install:
 
 after_script:
   - npm run build
-  - ls
   - git init
   - git add .
   - git commit -m "travis building"
