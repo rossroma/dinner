@@ -9,13 +9,12 @@ cache:
 
 before_install:
   - "npm i"
+  - git config --global user.name "${U_NAME}"
+  - git config --global user.email "${U_EMAIL}"
 
 after_script:
   - npm run build
-  - cd ./dist
   - git init
-  - git config user.name "${U_NAME}"
-  - git config user.email "${U_EMAIL}"
   - git add .
   - git commit -m "travis building"
   - git push --force --quiet "https://${G_TOKEN}@${G_PATH}" master:${G_BRANCH}
