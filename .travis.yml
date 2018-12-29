@@ -12,16 +12,14 @@ before_install:
 
 after_script:
   - npm run build
+  - cd ./dist
   - git init
-  - git config user.name "rossroma"
-  - git config user.email "906580223@qq.com"
+  - git config user.name "${U_NAME}"
+  - git config user.email "${U_EMAIL}"
   - git add .
   - git commit -m "travis building"
-  - git push --force "https://${G_TOKEN}@github.com/rossroma/dinner.git" master:master
+  - git push --force --quiet "https://${G_TOKEN}@${G_PATH}" master:${G_BRANCH}
 
 branches:
   only:
     - master
-
-env:
- global:
